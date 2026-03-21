@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import Header from './components/Header';
-import BottomNav from './components/BottomNav';
+
 import BrowsePage from './pages/BrowsePage';
 import PortfolioPage from './pages/PortfolioPage';
 import CompanyDrawer from './components/CompanyDrawer';
@@ -36,15 +36,15 @@ export default function App() {
   return (
     <div className="min-h-screen bg-bg">
       <div className="mx-auto max-w-app">
-        <Header />
-        <main className="pb-20">
+        <Header currentPage={currentPage} onNavigate={setCurrentPage} />
+        <main>
           {currentPage === 'browse' ? (
             <BrowsePage onSelectCompany={handleSelectCompany} />
           ) : (
             <PortfolioPage />
           )}
         </main>
-        <BottomNav currentPage={currentPage} onNavigate={setCurrentPage} />
+
       </div>
 
       {selectedCompany && (
