@@ -258,7 +258,7 @@ The app runs as a **single Docker web service** — nginx serves the frontend an
 1. Create a new **Web Service** on Render
 2. **Environment:** Docker
 3. **Root Directory:** (leave blank — uses repo root `Dockerfile`)
-4. **Port:** `80`
+4. Render auto-detects the port (the container reads the `PORT` env var)
 
 That's it. No env vars needed for the basic deploy.
 
