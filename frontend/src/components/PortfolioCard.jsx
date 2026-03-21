@@ -7,7 +7,7 @@ const statusStyles = {
 };
 
 export default function PortfolioCard({ investment }) {
-  const { company, amountInvested, estimatedValue, investedAt, status, option } =
+  const { companyName, logoEmoji, amountInvested, estimatedValue, investedAt, status, tier } =
     investment;
 
   const gain = estimatedValue != null ? estimatedValue - amountInvested : null;
@@ -20,14 +20,14 @@ export default function PortfolioCard({ investment }) {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-2xl flex-shrink-0" role="img" aria-hidden="true">
-            {company?.logoEmoji}
+            {logoEmoji}
           </span>
           <div className="min-w-0">
             <h3 className="font-display text-sm text-text leading-snug truncate">
-              {company?.name}
+              {companyName}
             </h3>
-            {option?.tier && (
-              <p className="text-xs text-text-muted">{option.tier} tier</p>
+            {tier && (
+              <p className="text-xs text-text-muted">{tier} tier</p>
             )}
           </div>
         </div>

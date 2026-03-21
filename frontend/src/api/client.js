@@ -9,6 +9,20 @@ const client = axios.create({
   },
 });
 
+// Auto-retry on network errors / 502-504 (backend still starting)
+client.interceptors.response.use(null, async (error) => {
+  const config = error.config;
+  const status = error.response?.status;
+  const isRetryable = !status || status === 502 || status === 503 || status === 504;
+
+  if (isRetryable && (!config._retryCount || config._retryCount < 5)) {
+    config._retryCount = (config._retryCount || 0) + 1;
+    await new Promise((r) => setTimeout(r, config._retryCount * 2000));
+    return client(config);
+  }
+  return Promise.reject(error);
+});
+
 export function getCompanies() {
   return client.get('/companies').then((res) => res.data);
 }

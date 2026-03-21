@@ -32,7 +32,12 @@ export default function BrowsePage({ onSelectCompany }) {
       </p>
 
       <div className="mt-5 space-y-4">
-        {loading && <SkeletonList />}
+        {loading && (
+          <>
+            <StartingHint />
+            <SkeletonList />
+          </>
+        )}
 
         {error && (
           <ErrorState message={error} onRetry={fetchCompanies} />
@@ -51,6 +56,20 @@ export default function BrowsePage({ onSelectCompany }) {
           ))}
       </div>
     </div>
+  );
+}
+
+function StartingHint() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+  if (!visible) return null;
+  return (
+    <p className="text-center text-xs text-text-muted animate-pulse mb-3">
+      Waking up the server &mdash; this can take a moment...
+    </p>
   );
 }
 
