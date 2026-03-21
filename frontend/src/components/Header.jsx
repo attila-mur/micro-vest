@@ -5,30 +5,25 @@ export default function Header({ currentPage, onNavigate }) {
 
   return (
     <header className="sticky top-0 z-30 bg-gradient-to-r from-primary-dark to-green-700 shadow-md">
-      <div className="flex items-center justify-between px-4 py-4">
+      <div className="flex items-center px-4 py-3">
         <button
           onClick={scrollToTop}
           aria-label="Scroll to top"
-          className="flex items-center gap-3"
+          className="flex items-center gap-2.5"
         >
           <span
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-2xl"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-xl"
             role="img"
-            aria-label="Seedling"
+            aria-label="MicroVest"
           >
             🌱
           </span>
-          <div>
-            <h1 className="font-display text-xl font-bold text-white leading-tight tracking-wide">
-              MicroVest
-            </h1>
-            <p className="text-[11px] text-green-100 leading-tight">
-              Invest in the places you love.
-            </p>
-          </div>
+          <h1 className="font-display text-lg font-bold text-white tracking-wide">
+            MicroVest
+          </h1>
         </button>
 
-        <nav className="flex gap-1" aria-label="Main navigation">
+        <nav className="ml-auto flex gap-1" aria-label="Main navigation">
           <NavButton
             active={currentPage === 'browse'}
             onClick={() => onNavigate('browse')}
