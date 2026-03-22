@@ -7,8 +7,6 @@ import com.microvest.dto.CompanySummaryDTO;
 import com.microvest.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,20 +33,5 @@ public class CompanyController {
         log.info("GET /api/companies/{}", id);
         CompanyDetailDTO company = companyService.getCompanyById(id);
         return ResponseEntity.ok(company);
-    }
-
-    @GetMapping("/{id}/pl-statement")
-    public ResponseEntity<byte[]> getPlStatement(@PathVariable Long id) {
-        log.info("GET /api/companies/{}/pl-statement", id);
-        byte[] pdfBytes = companyService.generatePlStatement(id);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "pl-statement-company-" + id + ".pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
     }
 }

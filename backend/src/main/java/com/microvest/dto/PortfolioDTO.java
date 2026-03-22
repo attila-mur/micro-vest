@@ -14,7 +14,5 @@ import lombok.NoArgsConstructor;
 public class PortfolioDTO {
 
     private double totalInvested;
-    private double estimatedValue;
-    private double gainLossPercent;
     private List<InvestmentDTO> investments;
 }

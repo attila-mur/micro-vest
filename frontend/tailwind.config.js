@@ -5,22 +5,23 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#4ade80',
-          dark: '#16a34a',
+          DEFAULT: '#6db87b',
+          dark: '#2d6a4f',
+          light: '#95d5b2',
         },
         surface: {
           DEFAULT: '#ffffff',
-          alt: '#f8fafc',
+          alt: '#f8faf8',
         },
-        bg: '#f0fdf4',
+        bg: '#f5f9f5',
         text: {
-          DEFAULT: '#0f172a',
-          muted: '#64748b',
+          DEFAULT: '#1b2a1b',
+          muted: '#5a6b5a',
         },
-        border: '#e2e8f0',
-        success: '#22c55e',
-        warning: '#f59e0b',
-        danger: '#ef4444',
+        border: '#d4ddd4',
+        success: '#40916c',
+        warning: '#e9a820',
+        danger: '#d64545',
       },
       fontFamily: {
         display: ['"DM Serif Display"', 'Georgia', 'serif'],
@@ -32,6 +33,9 @@ export default {
       },
       maxWidth: {
         app: '480px',
+      },
+      animation: {
+        slideUp: 'slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards',
       },
     },
   },

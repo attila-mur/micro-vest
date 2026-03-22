@@ -50,11 +50,11 @@ public class Company {
 
     private double revenueLastYear;
 
-    private double revenueYearBefore;
+    private double equityOffered;
 
-    private double fundingGoal;
+    private double amountSought;
 
-    private double fundingRaised;
+    private double profitSharePercent;
 
     private String riskLevel;
 

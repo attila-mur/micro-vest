@@ -3,17 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #4ade80;
-  --color-primary-dark: #16a34a;
-  --color-bg: #f0fdf4;
+  --color-primary: #6db87b;
+  --color-primary-dark: #2d6a4f;
+  --color-primary-light: #95d5b2;
+  --color-bg: #f5f9f5;
   --color-surface: #ffffff;
-  --color-surface-alt: #f8fafc;
-  --color-text: #0f172a;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  --color-surface-alt: #f8faf8;
+  --color-text: #1b2a1b;
+  --color-text-muted: #5a6b5a;
+  --color-border: #d4ddd4;
+  --color-success: #40916c;
+  --color-warning: #e9a820;
+  --color-danger: #d64545;
 }
 
 @layer base {
@@ -31,18 +32,6 @@
 }
 
 @layer components {
-  .funding-bar-fill {
-    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .drawer-overlay {
-    animation: fadeIn 0.3s ease-out forwards;
-  }
-
-  .drawer-panel {
-    animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-  }
-
   .skeleton-shimmer {
     background: linear-gradient(
       90deg,
@@ -53,31 +42,27 @@
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

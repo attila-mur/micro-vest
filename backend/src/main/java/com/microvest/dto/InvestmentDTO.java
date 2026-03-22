@@ -19,8 +19,7 @@ public class InvestmentDTO {
     private String logoEmoji;
     private String category;
     private double amountInvested;
-    private double estimatedValue;
+    private double equityShareAcquired;
     private LocalDate investedAt;
     private String status;
-    private String tier;
 }

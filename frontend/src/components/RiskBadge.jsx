@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 const riskStyles = {
   Low: 'bg-success/15 text-success',
   Medium: 'bg-warning/15 text-warning',
@@ -5,18 +7,15 @@ const riskStyles = {
 };
 
 export default function RiskBadge({ level }) {
+  const { t } = useTranslation();
+
   return (
-    <div className="text-right">
-      <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
-        Risk
-      </p>
-      <span
-        className={`inline-block mt-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-          riskStyles[level] || riskStyles.Medium
-        }`}
-      >
-        {level}
-      </span>
-    </div>
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+        riskStyles[level] || riskStyles.Medium
+      }`}
+    >
+      {t(`risk.${level}`, level)}
+    </span>
   );
 }

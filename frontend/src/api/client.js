@@ -31,19 +31,13 @@ export function getCompany(id) {
   return client.get(`/companies/${id}`).then((res) => res.data);
 }
 
-export function getPlStatement(id) {
-  return client.get(`/companies/${id}/pl-statement`, {
-    responseType: 'blob',
-  });
-}
-
 export function getPortfolio() {
   return client.get('/portfolio').then((res) => res.data);
 }
 
-export function invest(companyId, optionId, amount) {
+export function invest(companyId, amount) {
   return client
-    .post('/portfolio/invest', { companyId, optionId, amount })
+    .post('/portfolio/invest', { companyId, amount })
     .then((res) => res.data);
 }
 

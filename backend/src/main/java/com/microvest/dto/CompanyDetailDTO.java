@@ -1,7 +1,5 @@
 package com.microvest.dto;
 
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,14 +20,12 @@ public class CompanyDetailDTO {
     private int foundedYear;
     private int employeeCount;
     private double revenueLastYear;
-    private double revenueGrowthPercent;
-    private double fundingGoal;
-    private double fundingRaised;
+    private double equityOffered;
+    private double amountSought;
+    private double profitSharePercent;
     private String riskLevel;
     private boolean featured;
     private String description;
     private String founderStatement;
     private String investmentPlan;
-    private double revenueYearBefore;
-    private List<InvestmentOptionDTO> investmentOptions;
 }

@@ -10,13 +10,14 @@ Think of it as a stock exchange for Main Street, not Wall Street.
 
 ## Features
 
-- 📋 **Company Browser** — scrollable feed of local businesses with key financial metrics,
-  funding progress, and risk rating at a glance
-- 🔍 **Company Detail Sheet** — tap any company to see its full story, founder statement,
-  investment plan, and available investment tiers
-- 📄 **P&L Download** — download a company's last annual Profit & Loss statement as a PDF
-- 💼 **Portfolio View** — see your active investments, estimated current value, and total gains
-- 🎯 **Investment Flow** — choose a tier and commit (demo mode, no real payments)
+- 🏠 **Landing Page** — explains the platform with "how it works" steps
+- 📋 **Company Browser** — scrollable card feed with category filters, equity offered, and risk rating
+- 🔍 **Company Detail** — full page with metrics, founder quote, investment plan, and invest button
+- 💼 **Portfolio View** — see your equity stakes and total invested
+- 🎯 **Investment Flow** — invest and acquire equity (demo mode, no real payments)
+- 🌐 **Bilingual** — Hungarian (default) and English, switchable from the header
+- 📖 **About Page** — value propositions for investors and entrepreneurs
+- 🏗️ **Marketplace** — placeholder for future secondary market
 
 ---
 
@@ -27,10 +28,11 @@ Think of it as a stock exchange for Main Street, not Wall Street.
 | Backend    | Java 21, Spring Boot 3.x, Maven                    |
 | Database   | H2 (in-memory, resets on restart)                  |
 | ORM        | Spring Data JPA / Hibernate                        |
-| Frontend   | React 18, Vite, TailwindCSS                        |
+| Frontend   | React 18, Vite, TailwindCSS, React Router, react-i18next |
+| i18n       | Hungarian (default) + English                      |
 | API        | REST/JSON, prefixed `/api/**`                      |
-| Container  | Docker (multi-stage), docker-compose               |
-| Hosting    | Render (backend Web Service + frontend Static Site)|
+| Container  | Docker (single container, nginx + Java + supervisor)|
+| Hosting    | Render (single Docker Web Service)                 |
 
 ---
 
@@ -45,12 +47,12 @@ Think of it as a stock exchange for Main Street, not Wall Street.
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Frontend (React + Vite)                     │
-│  ┌─────────────────┐  ┌──────────────────┐  ┌───────────────┐  │
-│  │   BrowsePage    │  │  CompanyDrawer   │  │ PortfolioPage │  │
-│  │  (card feed)    │  │  (bottom sheet)  │  │  (holdings)   │  │
-│  └─────────────────┘  └──────────────────┘  └───────────────┘  │
-│              Served by nginx / Vite dev server                  │
-│              nginx proxies /api/* → backend                     │
+│  ┌──────────┐ ┌──────────┐ ┌───────────┐ ┌───────────────┐  │
+│  │ Landing  │ │  Browse  │ │  Company  │ │   Portfolio   │  │
+│  │   (/)    │ │ (/browse)│ │(/company) │ │ (/portfolio)  │  │
+│  └──────────┘ └──────────┘ └───────────┘ └───────────────┘  │
+│         React Router · react-i18next (HU/EN)                 │
+│              nginx proxies /api/* → backend                   │
 └─────────────────────────┬───────────────────────────────────────┘
                           │ /api/**
                           ▼
@@ -89,34 +91,25 @@ Think of it as a stock exchange for Main Street, not Wall Street.
 | city | String | Location (e.g. "Austin, TX") |
 | logoEmoji | String | Placeholder logo emoji |
 | tagline | String | One-line pitch |
-| description | Text | Full company story |
+| description | Text | Short company description |
 | founderStatement | Text | First-person quote from founder |
 | investmentPlan | Text | How funds will be used |
 | foundedYear | int | Year the company was founded |
 | employeeCount | int | Current headcount |
 | revenueLastYear | double | Last year revenue in USD |
-| revenueYearBefore | double | Prior year revenue (for growth %) |
-| fundingGoal | double | Total round size in USD |
-| fundingRaised | double | Amount already committed |
+| equityOffered | double | % of ownership available to investors |
+| amountSought | double | Total capital being raised in USD |
+| profitSharePercent | double | % of monthly profits distributed to investors |
 | riskLevel | String | Low / Medium / High |
 | featured | boolean | Show at top of browse feed |
-
-### InvestmentOption
-| Field | Type | Description |
-|---|---|---|
-| tier | String | Seed / Growth / Partner |
-| minimumInvestment | double | Minimum buy-in in USD |
-| expectedAnnualReturn | double | Projected annual return % |
-| lockupMonths | int | Lock-up period |
-| perks | String | Non-financial perks (e.g. "10% dining discount") |
 
 ### Investment (Portfolio)
 | Field | Type | Description |
 |---|---|---|
 | userId | String | Always `"demo-user"` in this demo |
 | company | Company | FK |
-| option | InvestmentOption | Which tier |
 | amountInvested | double | Amount committed |
+| equityShareAcquired | double | % of equity acquired |
 | investedAt | LocalDate | Date of investment |
 | status | String | Active / Pending / Exited |
 
@@ -130,7 +123,6 @@ Think of it as a stock exchange for Main Street, not Wall Street.
 |--------|----------|-------------|
 | GET | `/api/companies` | List all companies (summary cards) |
 | GET | `/api/companies/{id}` | Full company detail |
-| GET | `/api/companies/{id}/pl-statement` | Download P&L PDF |
 
 **Example response — GET /api/companies**
 ```json
@@ -145,9 +137,9 @@ Think of it as a stock exchange for Main Street, not Wall Street.
     "foundedYear": 2018,
     "employeeCount": 12,
     "revenueLastYear": 840000,
-    "revenueGrowthPercent": 18.5,
-    "fundingGoal": 150000,
-    "fundingRaised": 67000,
+    "equityOffered": 15.0,
+    "amountSought": 150000,
+    "profitSharePercent": 20.0,
     "riskLevel": "Medium",
     "featured": true
   }
@@ -164,19 +156,18 @@ Think of it as a stock exchange for Main Street, not Wall Street.
 **Example response — GET /api/portfolio**
 ```json
 {
-  "totalInvested": 12500.00,
-  "estimatedValue": 14230.00,
-  "gainLossPercent": 13.84,
+  "totalInvested": 21500.00,
   "investments": [
     {
       "id": 1,
-      "companyName": "Brew Brothers Craft Brewery",
-      "logoEmoji": "🍺",
+      "companyName": "The Golden Fork",
+      "companyId": 1,
+      "logoEmoji": "🍽️",
+      "category": "Restaurant",
       "amountInvested": 2500.00,
-      "estimatedValue": 2940.00,
-      "investedAt": "2024-03-15",
-      "status": "Active",
-      "tier": "Growth"
+      "equityShareAcquired": 0.25,
+      "investedAt": "2024-01-22",
+      "status": "Active"
     }
   ]
 }
@@ -283,17 +274,21 @@ That's it. No env vars needed for the basic deploy.
 
 | Area | Status |
 |------|--------|
-| Backend API | ✅ |
+| Backend API (profit-share model) | ✅ |
 | Data seeding (15 companies) | ✅ |
-| Browse page | ✅ |
-| Company detail drawer | ✅ |
-| P&L PDF download | ✅ |
+| Landing page | ✅ |
+| About / Mission page | ✅ |
+| Browse page (with filters) | ✅ |
+| Company detail page | ✅ |
 | Portfolio page | ✅ |
 | Investment flow (demo) | ✅ |
-| Docker setup | ✅ |
-| Real auth | ❌ Out of scope |
-| Real payments | ❌ Out of scope |
-| Persistent DB | ❌ Out of scope (demo only) |
+| i18n (Hungarian + English) | ✅ |
+| Docker + Render deployment | ✅ |
+| Secondary marketplace | 🏗️ Placeholder |
+| Entrepreneur dashboard | ❌ Future |
+| Real auth | ❌ Future |
+| Real payments | ❌ Future |
+| Persistent DB | ❌ Future |
 
 ---
 

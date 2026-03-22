@@ -1,4 +1,5 @@
-import { formatCurrency, formatPercent, formatDate } from '../utils/format';
+import { useTranslation } from 'react-i18next';
+import { formatCurrency, formatDate } from '../utils/format';
 
 const statusStyles = {
   Active: 'bg-success/15 text-success',
@@ -7,13 +8,11 @@ const statusStyles = {
 };
 
 export default function PortfolioCard({ investment }) {
-  const { companyName, logoEmoji, amountInvested, estimatedValue, investedAt, status, tier } =
+  const { t } = useTranslation();
+  const { companyName, logoEmoji, amountInvested, equityShareAcquired, investedAt, status } =
     investment;
 
-  const gain = estimatedValue != null ? estimatedValue - amountInvested : null;
-  const gainPct =
-    gain != null && amountInvested > 0 ? (gain / amountInvested) * 100 : null;
-  const isPositive = gain != null && gain >= 0;
+  const statusKey = `portfolio.status${status}`;
 
   return (
     <div className="rounded-2xl bg-surface p-4 shadow-sm ring-1 ring-border/50">
@@ -26,9 +25,6 @@ export default function PortfolioCard({ investment }) {
             <h3 className="font-display text-sm text-text leading-snug truncate">
               {companyName}
             </h3>
-            {tier && (
-              <p className="text-xs text-text-muted">{tier} tier</p>
-            )}
           </div>
         </div>
         <span
@@ -36,14 +32,14 @@ export default function PortfolioCard({ investment }) {
             statusStyles[status] || statusStyles.Active
           }`}
         >
-          {status}
+          {t(statusKey, status)}
         </span>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
-            Invested
+            {t('portfolio.invested')}
           </p>
           <p className="font-mono text-sm font-semibold text-text">
             {formatCurrency(amountInvested)}
@@ -51,30 +47,15 @@ export default function PortfolioCard({ investment }) {
         </div>
         <div className="text-right">
           <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
-            Current Value
+            {t('portfolio.equity')}
           </p>
-          <p className="font-mono text-sm font-semibold text-text">
-            {estimatedValue != null ? formatCurrency(estimatedValue) : '--'}
+          <p className="font-mono text-sm font-semibold text-primary-dark">
+            {equityShareAcquired}%
           </p>
         </div>
       </div>
 
-      <div className="mt-2 flex items-center justify-between">
-        <p className="text-xs text-text-muted">
-          {formatDate(investedAt)}
-        </p>
-        {gainPct != null && (
-          <p
-            className={`font-mono text-xs font-semibold ${
-              isPositive ? 'text-success' : 'text-danger'
-            }`}
-          >
-            {isPositive ? '+' : ''}
-            {formatCurrency(gain)} ({isPositive ? '\u25B2' : '\u25BC'}{' '}
-            {formatPercent(Math.abs(gainPct))})
-          </p>
-        )}
-      </div>
+      <p className="mt-2 text-xs text-text-muted">{formatDate(investedAt)}</p>
     </div>
   );
 }

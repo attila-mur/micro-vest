@@ -16,9 +16,6 @@ public class InvestRequest {
     @NotNull(message = "Company ID is required")
     private Long companyId;
 
-    @NotNull(message = "Option ID is required")
-    private Long optionId;
-
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")
     private Double amount;

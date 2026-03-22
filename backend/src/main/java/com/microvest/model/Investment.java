@@ -33,11 +33,9 @@ public class Investment {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "option_id", nullable = false)
-    private InvestmentOption option;
-
     private double amountInvested;
+
+    private double equityShareAcquired;
 
     private LocalDate investedAt;
 

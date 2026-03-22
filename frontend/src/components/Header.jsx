@@ -1,99 +1,70 @@
-export default function Header({ currentPage, onNavigate }) {
+import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+
+const navItems = [
+  { path: '/browse', key: 'browse' },
+  { path: '/portfolio', key: 'portfolio' },
+  { path: '/about', key: 'about' },
+  { path: '/marketplace', key: 'marketplace' },
+];
+
+export default function Header() {
+  const { t, i18n } = useTranslation();
+  const { pathname } = useLocation();
+
+  const toggleLang = () => {
+    i18n.changeLanguage(i18n.language === 'hu' ? 'en' : 'hu');
+  };
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-gradient-to-r from-primary-dark to-green-700 shadow-md">
+    <header className="sticky top-0 z-30 bg-gradient-to-r from-primary-dark to-emerald-900 shadow-md">
       <div className="flex items-center px-4 py-3">
-        <button
+        <Link
+          to="/"
           onClick={scrollToTop}
-          aria-label="Scroll to top"
-          className="flex items-center gap-2.5"
+          aria-label="MicroVest home"
+          className="flex items-center gap-2.5 shrink-0"
         >
-          <span
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-xl"
-            role="img"
-            aria-label="MicroVest"
-          >
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-xl">
             🌱
           </span>
           <h1 className="font-display text-lg font-bold text-white tracking-wide">
             MicroVest
           </h1>
-        </button>
+        </Link>
 
-        <nav className="ml-auto flex gap-1" aria-label="Main navigation">
-          <NavButton
-            active={currentPage === 'browse'}
-            onClick={() => onNavigate('browse')}
-            label="Browse"
+        <nav className="ml-auto flex items-center gap-1" aria-label="Main navigation">
+          {navItems.map(({ path, key }) => {
+            const active = pathname === path;
+            return (
+              <Link
+                key={key}
+                to={path}
+                aria-current={active ? 'page' : undefined}
+                className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
+                  active
+                    ? 'bg-white/25 text-white'
+                    : 'text-emerald-200 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {t(`nav.${key}`)}
+              </Link>
+            );
+          })}
+
+          <button
+            onClick={toggleLang}
+            aria-label="Switch language"
+            className="ml-1 rounded-lg border border-white/30 px-2 py-1 text-[11px] font-bold text-white transition-colors hover:bg-white/15"
           >
-            <BrowseIcon />
-          </NavButton>
-          <NavButton
-            active={currentPage === 'portfolio'}
-            onClick={() => onNavigate('portfolio')}
-            label="Portfolio"
-          >
-            <PortfolioIcon />
-          </NavButton>
+            {i18n.language === 'hu' ? 'EN' : 'HU'}
+          </button>
         </nav>
       </div>
     </header>
-  );
-}
-
-function NavButton({ active, onClick, label, children }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-        active
-          ? 'bg-white/25 text-white'
-          : 'text-green-200 hover:bg-white/10 hover:text-white'
-      }`}
-    >
-      {children}
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function BrowseIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function PortfolioIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-    </svg>
   );
 }

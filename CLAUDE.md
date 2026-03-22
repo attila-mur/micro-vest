@@ -14,8 +14,10 @@ Think of it as a stock exchange, but for Main Street instead of Wall Street.
 
 Users can:
 - Browse local companies with key financial metrics on a card view
-- Open a company profile to read its story, investment plan, and download a P&L statement
+- Open a company profile to read its story and investment plan
+- Invest in companies and receive equity + profit-share
 - View their own investment portfolio (demo user pre-loaded with investments)
+- Switch between Hungarian (default) and English UI
 
 ---
 
@@ -35,7 +37,8 @@ Users can:
 | Backend    | Java 21, Spring Boot 3.x, Maven                 |
 | Database   | H2 in-memory (no persistence needed for demo)  |
 | ORM        | Spring Data JPA / Hibernate                     |
-| Frontend   | React 18 + Vite, TailwindCSS                    |
+| Frontend   | React 18 + Vite, TailwindCSS, React Router, react-i18next |
+| i18n       | Hungarian (default) + English                   |
 | API        | REST JSON, served at `/api/**`                  |
 | Container  | Docker (multi-stage builds), docker-compose     |
 | Hosting    | Render (see deployment section)                 |
@@ -65,8 +68,7 @@ microvest/
 │           │   │   └── PortfolioController.java
 │           │   ├── model/
 │           │   │   ├── Company.java
-│           │   │   ├── Investment.java
-│           │   │   └── InvestmentOption.java
+│           │   │   └── Investment.java
 │           │   ├── repository/
 │           │   │   ├── CompanyRepository.java
 │           │   │   └── InvestmentRepository.java
@@ -74,8 +76,7 @@ microvest/
 │           │       ├── CompanyService.java
 │           │       └── PortfolioService.java
 │           └── resources/
-│               ├── application.properties
-│               └── pl-statements/            ← mock PDF files (one per company)
+│               └── application.properties
 │
 └── frontend/                   ← React + Vite project
     ├── Dockerfile
@@ -88,16 +89,22 @@ microvest/
         ├── App.jsx
         ├── api/
         │   └── client.js                     ← Axios base config
+        ├── i18n/
+        │   ├── i18n.js                      ← i18n config (HU default)
+        │   ├── hu.json                      ← Hungarian translations
+        │   └── en.json                      ← English translations
         ├── components/
         │   ├── CompanyCard.jsx
-        │   ├── CompanyDrawer.jsx              ← slide-up detail sheet
-        │   ├── InvestmentOptions.jsx
         │   ├── PortfolioCard.jsx
-        │   ├── BottomNav.jsx
-        │   └── Header.jsx
+        │   ├── RiskBadge.jsx
+        │   └── Header.jsx                   ← nav + language switcher
         ├── pages/
-        │   ├── BrowsePage.jsx
-        │   └── PortfolioPage.jsx
+        │   ├── LandingPage.jsx              ← / (hero + how it works)
+        │   ├── AboutPage.jsx                ← /about (mission, value props)
+        │   ├── BrowsePage.jsx               ← /browse (card feed + filters)
+        │   ├── CompanyPage.jsx              ← /company/:id (detail + invest)
+        │   ├── PortfolioPage.jsx            ← /portfolio (user investments)
+        │   └── MarketplacePage.jsx          ← /marketplace (coming soon)
         └── styles/
             └── index.css
 ```
@@ -118,32 +125,17 @@ public class Company {
     String country;
     String logoEmoji;          // use emojis as placeholder logos (e.g. "🍺")
     String tagline;            // one-line pitch
-    String description;        // 2–3 paragraph story, shown in detail view
+    String description;        // short company description
     String founderStatement;   // quote from the founder
     String investmentPlan;     // how they will use the investment money
     int foundedYear;
     int employeeCount;
     double revenueLastYear;    // in USD
-    double revenueYearBefore;  // for growth % calculation
-    double fundingGoal;        // total round size in USD
-    double fundingRaised;      // already committed
+    double equityOffered;      // % of ownership available to investors
+    double amountSought;       // total capital being raised in USD
+    double profitSharePercent; // % of monthly profits distributed to investors
     String riskLevel;          // "Low", "Medium", "High"
     boolean featured;
-}
-```
-
-### InvestmentOption
-
-```java
-@Entity
-public class InvestmentOption {
-    Long id;
-    Company company;
-    String tier;               // e.g. "Seed", "Growth", "Partner"
-    double minimumInvestment;
-    double expectedAnnualReturn; // percentage
-    int lockupMonths;
-    String perks;              // e.g. "10% discount at the restaurant"
 }
 ```
 
@@ -155,12 +147,17 @@ public class Investment {
     Long id;
     String userId;             // always "demo-user" for now
     Company company;
-    InvestmentOption option;
     double amountInvested;
+    double equityShareAcquired; // % of equity acquired
     LocalDate investedAt;
     String status;             // "Active", "Pending", "Exited"
 }
 ```
+
+### Business Model
+
+Investors acquire ownership stakes in running businesses and receive monthly profit-share payments.
+Payments are tied to actual profits — if no profit in a given month, no payment is due.
 
 ---
 
@@ -191,19 +188,13 @@ For each company, write:
 - A compelling `description` (2–3 paragraphs, narrative, specific)
 - A personal `founderStatement` (first-person, warm, specific)
 - A concrete `investmentPlan` (specific use of funds, e.g. "open second location", "new brewing equipment")
-- Realistic revenue figures (range: $180k–$2.4M), with 5–30% YoY growth
-- Funding goals between $50k–$500k, partially filled
-- 2–3 `InvestmentOption` tiers per company
+- Realistic revenue figures (range: $180k–$2.4M)
+- Equity offered: 5–25%, amount sought: $50k–$500k, profit share: 15–25%
 
 ### Demo User Portfolio
 
 Pre-invest the demo user (`userId = "demo-user"`) in **5 of the 15 companies** with varied amounts,
-dates, and statuses so the portfolio page is interesting:
-
-- 2 Active investments (invested 6–18 months ago)
-- 1 Pending investment (just submitted)
-- 1 that shows strong paper gains
-- 1 in a less glamorous business to show diversity
+dates, and statuses so the portfolio page is interesting.
 
 ---
 
@@ -216,7 +207,6 @@ All endpoints prefixed with `/api`.
 ```
 GET  /api/companies                    → List<CompanySummaryDTO>
 GET  /api/companies/{id}              → CompanyDetailDTO
-GET  /api/companies/{id}/pl-statement → PDF file download
 ```
 
 **CompanySummaryDTO** (for browse cards):
@@ -231,9 +221,9 @@ GET  /api/companies/{id}/pl-statement → PDF file download
   "foundedYear": 2018,
   "employeeCount": 12,
   "revenueLastYear": 840000,
-  "revenueGrowthPercent": 18.5,
-  "fundingGoal": 150000,
-  "fundingRaised": 67000,
+  "equityOffered": 15.0,
+  "amountSought": 150000,
+  "profitSharePercent": 20.0,
   "riskLevel": "Medium",
   "featured": true
 }
@@ -244,8 +234,7 @@ GET  /api/companies/{id}/pl-statement → PDF file download
 {
   "description": "...",
   "founderStatement": "...",
-  "investmentPlan": "...",
-  "investmentOptions": [ ... ]
+  "investmentPlan": "..."
 }
 ```
 
@@ -259,14 +248,18 @@ POST /api/portfolio/invest             → InvestmentDTO (demo action, always su
 **PortfolioDTO:**
 ```json
 {
-  "totalInvested": 12500.00,
-  "estimatedValue": 14230.00,
+  "totalInvested": 21500.00,
   "investments": [ ... ]
 }
 ```
 
-For the P&L statement, generate a simple fake PDF on the fly using iText or Apache PDFBox,
-or serve a pre-generated static PDF. Keep it simple — a one-page summary is fine.
+**InvestRequest (POST body):**
+```json
+{
+  "companyId": 1,
+  "amount": 5000
+}
+```
 
 ---
 
@@ -276,14 +269,16 @@ This is critical. The frontend must be **genuinely beautiful**, not generic.
 
 ### Must-haves
 - **Mobile-first:** Design for 390px width. Desktop should be a centered card (max-width 480px).
-- **Bottom navigation bar** with two tabs: Browse (🔍) and Portfolio (💼)
+- **Top navigation** in header with links: Browse, Portfolio, About, Marketplace + language switcher (HU/EN)
+- **React Router** for page navigation (/, /browse, /company/:id, /portfolio, /about, /marketplace)
+- **i18n:** All UI strings via react-i18next. Hungarian default, English available.
 - **Company cards** in a scrollable feed — not a table. Each card shows: emoji logo, name,
-  category badge, city, revenue, growth %, funding progress bar, risk badge.
-- **Company detail** opens as a **bottom drawer / sheet** (slides up from bottom, 90vh),
-  NOT a new page. Shows full description, founder statement, investment plan, and investment
-  option cards. Has a download P&L button.
-- **Portfolio page** shows total invested, estimated value (with gain %), and a list of
-  investment cards grouped by status.
+  category badge, city, equity offered, amount sought, profit share %, risk badge.
+- **Company detail** is a full page (/company/:id). Shows description, founder statement,
+  investment plan, key metrics, and invest button.
+- **Portfolio page** shows total invested and a list of investment cards grouped by status.
+- **Landing page** (/) with hero section and "how it works" steps.
+- **About page** with value propositions for investors and entrepreneurs.
 
 ### Typography
 Do **not** use Inter or Roboto. Choose something with character:
@@ -309,12 +304,11 @@ Load from Google Fonts.
 ```
 
 ### Component Behaviors
-- Funding progress bar: animated on load, green fill, shows `$X raised of $Y goal`
-- Risk badge: green=Low, amber=Medium, red=High
-- Revenue growth: show `▲ 18.5%` in green or `▼ 3.2%` in red
+- Risk badge: green=Low, amber=Medium, red=High (translated via i18n)
 - Cards have a subtle shadow, rounded corners (16px), hover lift effect
 - Investing action: a simple modal/bottom sheet confirming the amount — no real payment flow
 - Loading skeleton cards while fetching
+- Category filter pills on browse page
 
 ---
 
@@ -323,8 +317,6 @@ Load from Google Fonts.
 - Use `@CrossOrigin` or a global `CorsConfig` bean to allow frontend dev server (`localhost:5173`)
 - Use DTOs — never expose JPA entities directly from controllers
 - Use `@Value("${app.demo-user-id:demo-user}")` pattern for demo user ID
-- P&L PDF endpoint: generate with Apache PDFBox or serve a static resource. If generating,
-  include company name, year, mock revenue/expense table, and a disclaimer watermark.
 - Validation: use `@Valid` and Bean Validation on any POST endpoints
 - Use `application.properties` for H2 console (enabled in dev, disabled in prod profile)
 
@@ -486,21 +478,18 @@ export default {
 ## Current Progress
 
 ### What's Done
-- **All backend files created** (21 files) — models, DTOs, repositories, services, controllers, config, DataSeeder with all 15 companies, PDF generation with PDFBox
-- **All frontend files created** (22 files) — React components, pages, API client, Tailwind config, styles with animations, Google Fonts setup
-- **docker-compose.yml** created at project root
-- **Frontend `npm install`** completed successfully (node_modules present)
+- **Backend:** Models (Company, Investment), DTOs, services, controllers, DataSeeder with 15 companies, demo portfolio
+- **Frontend:** React Router, react-i18next (HU/EN), 6 pages (Landing, About, Browse, Company, Portfolio, Marketplace)
+- **Deployment:** Single Docker container (nginx + Java via supervisor), deployed on Render
+- **Both `mvn compile` and `npm run build` pass cleanly**
 
-### What's Left
-1. **Install `openjdk-21-jdk`** — only the JRE is installed, `javac` is missing. Run: `sudo apt install openjdk-21-jdk`
-2. **Start backend** — `cd backend && mvn spring-boot:run` (first run will download Maven deps ~1-2 min)
-3. **Start frontend** — `cd frontend && npm run dev` (Vite dev server on port 5173, proxies /api to localhost:8080)
-4. **Fix any compilation/runtime errors** that surface on first boot
-5. **Visual QA** — verify the UI matches design specs
-
-### Known State
-- Maven dependencies were already downloaded to `~/.m2/repository` during the failed build attempt, so next build should be faster
-- Node.js 18.19.1 is installed (not 20+, but should work fine with Vite 6 and React 18)
+### What's NOT in scope (demo app)
+- Real authentication (hardcoded demo-user)
+- Real payments
+- Persistent database (H2 in-memory)
+- PDF financial statements
+- Entrepreneur dashboard (future)
+- Secondary marketplace (future)
 
 ---
 

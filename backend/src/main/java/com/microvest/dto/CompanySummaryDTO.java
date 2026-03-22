@@ -20,9 +20,9 @@ public class CompanySummaryDTO {
     private int foundedYear;
     private int employeeCount;
     private double revenueLastYear;
-    private double revenueGrowthPercent;
-    private double fundingGoal;
-    private double fundingRaised;
+    private double equityOffered;
+    private double amountSought;
+    private double profitSharePercent;
     private String riskLevel;
     private boolean featured;
 }

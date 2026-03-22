@@ -1,7 +1,6 @@
 package com.microvest.service;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import com.microvest.dto.InvestRequest;
@@ -9,9 +8,7 @@ import com.microvest.dto.InvestmentDTO;
 import com.microvest.dto.PortfolioDTO;
 import com.microvest.model.Company;
 import com.microvest.model.Investment;
-import com.microvest.model.InvestmentOption;
 import com.microvest.repository.CompanyRepository;
-import com.microvest.repository.InvestmentOptionRepository;
 import com.microvest.repository.InvestmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +21,6 @@ public class PortfolioService {
 
     private final InvestmentRepository investmentRepository;
     private final CompanyRepository companyRepository;
-    private final InvestmentOptionRepository investmentOptionRepository;
 
     public PortfolioDTO getPortfolio(String userId) {
         log.info("Fetching portfolio for user: {}", userId);
@@ -38,19 +34,8 @@ public class PortfolioService {
                 .mapToDouble(InvestmentDTO::getAmountInvested)
                 .sum();
 
-        double estimatedValue = investmentDTOs.stream()
-                .mapToDouble(InvestmentDTO::getEstimatedValue)
-                .sum();
-
-        double gainLossPercent = 0.0;
-        if (totalInvested > 0) {
-            gainLossPercent = Math.round(((estimatedValue - totalInvested) / totalInvested) * 100 * 10.0) / 10.0;
-        }
-
         return PortfolioDTO.builder()
                 .totalInvested(totalInvested)
-                .estimatedValue(Math.round(estimatedValue * 100.0) / 100.0)
-                .gainLossPercent(gainLossPercent)
                 .investments(investmentDTOs)
                 .build();
     }
@@ -62,14 +47,13 @@ public class PortfolioService {
         Company company = companyRepository.findById(request.getCompanyId())
                 .orElseThrow(() -> new RuntimeException("Company not found with id: " + request.getCompanyId()));
 
-        InvestmentOption option = investmentOptionRepository.findById(request.getOptionId())
-                .orElseThrow(() -> new RuntimeException("Investment option not found with id: " + request.getOptionId()));
+        double equityShare = (request.getAmount() / company.getAmountSought()) * company.getEquityOffered();
 
         Investment investment = Investment.builder()
                 .userId(userId)
                 .company(company)
-                .option(option)
                 .amountInvested(request.getAmount())
+                .equityShareAcquired(Math.round(equityShare * 100.0) / 100.0)
                 .investedAt(LocalDate.now())
                 .status("Pending")
                 .build();
@@ -82,14 +66,6 @@ public class PortfolioService {
 
     private InvestmentDTO toInvestmentDTO(Investment investment) {
         Company company = investment.getCompany();
-        InvestmentOption option = investment.getOption();
-
-        double estimatedValue = calculateEstimatedValue(
-                investment.getAmountInvested(),
-                option.getExpectedAnnualReturn(),
-                investment.getInvestedAt(),
-                investment.getStatus()
-        );
 
         return InvestmentDTO.builder()
                 .id(investment.getId())
@@ -98,26 +74,9 @@ public class PortfolioService {
                 .logoEmoji(company.getLogoEmoji())
                 .category(company.getCategory())
                 .amountInvested(investment.getAmountInvested())
-                .estimatedValue(Math.round(estimatedValue * 100.0) / 100.0)
+                .equityShareAcquired(investment.getEquityShareAcquired())
                 .investedAt(investment.getInvestedAt())
                 .status(investment.getStatus())
-                .tier(option.getTier())
                 .build();
-    }
-
-    private double calculateEstimatedValue(double amountInvested, double annualReturnPercent,
-                                           LocalDate investedAt, String status) {
-        if ("Pending".equals(status)) {
-            return amountInvested;
-        }
-        if ("Exited".equals(status)) {
-            long daysSinceInvestment = ChronoUnit.DAYS.between(investedAt, LocalDate.now());
-            double years = daysSinceInvestment / 365.25;
-            return amountInvested * Math.pow(1 + (annualReturnPercent / 100), years);
-        }
-        // Active
-        long daysSinceInvestment = ChronoUnit.DAYS.between(investedAt, LocalDate.now());
-        double years = daysSinceInvestment / 365.25;
-        return amountInvested * Math.pow(1 + (annualReturnPercent / 100), years);
     }
 }
